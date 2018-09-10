@@ -193,6 +193,8 @@ def hamming_distance(code_query, code_database):
     xor = np.logical_xor(code_query, code_database).sum()
     return xor / float(nm)
 
+
+## CASIA IRIS LAMP ##
 np.set_printoptions(threshold=np.nan)
 # Path to the Lamp-100 Dataset
 path_lamp = './CASIA-Iris-Lamp-100'

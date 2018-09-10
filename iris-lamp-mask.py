@@ -210,7 +210,7 @@ class Subject:
 			(cH, cV, cD) = wav[1]
 
 			feature_template = (cH*3 + cV + cD)/5
-			
+
 			iris_code = (feature_template >= 0)  #binarizing image with threshold_value 0
 			label = path[26:-4]
 
