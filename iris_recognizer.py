@@ -1,7 +1,3 @@
-#!/usr/bin/python
-# -*- coding: latin-1 -*-
-
-# Import the required modules
 import cv2, os
 import numpy as np
 from PIL import Image
@@ -11,34 +7,7 @@ from skimage import feature
 from sklearn import svm
 from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
-
-class Dataset:
-    def __init__(self, path):
-        self.path = path
-        self.images = []
-        self.labels = []
-        self.codes = []
-        self.iris = []
-
-    #funções comuns entre os datasets
-    def get_images_and_labels(self):
-
-        for d in os.listdir(self.path):
-            directory = os.path.join(self.path, d)
-            for sd in os.listdir(directory): #L ou R
-                subdirectory = os.path.join(directory,sd)
-                for f in os.listdir(subdirectory):
-                    if f.endswith('.jpg'): #é uma imagem
-                        image_path = os.path.join(subdirectory, f)
-                        image_pil = Image.open(image_path)
-                        # Convert the image format into numpy array
-                        image = np.array(image_pil, 'uint8')
-                        self.images.append(image)
-                        # Get the label of the image (de qual pessoa pertence)
-                        if subdirectory.endswith('L'):
-                            self.labels.append(int(os.path.split(image_path)[1].split("L")[0].replace("S", "")))
-                        else:
-                            self.labels.append(int(os.path.split(image_path)[1].split("R")[0].replace("S", "")))
+from dataset import Dataset
 
 #criar mascaras
 def preprocess_lamp(image):
@@ -199,26 +168,26 @@ np.set_printoptions(threshold=np.nan)
 # Path to the Lamp-100 Dataset
 path_lamp = './CASIA-Iris-Lamp-100'
 casia_lamp = Dataset(path_lamp)
-print "Lendo dataset CASIA Lamp"
-casia_lamp.get_images_and_labels()
+print("Lendo dataset CASIA Lamp")
+casia_lamp.load_images_and_labels()
 print (str(len(casia_lamp.images))+" imagens")
 c = centerx = centery = radius_iris = radius_pupil = 0
 for image in casia_lamp.images:
-    print "Pré-processando a imagem "+str(c+1)+" e detectando a pupila"
+    print("Pré-processando a imagem "+str(c+1)+" e detectando a pupila")
     pupil = preprocess_lamp(image)
     if pupil is not None: #achou a pupila
-        print "Detectando a iris"
+        print("Detectando a iris")
         radius_iris = get_iris(image, pupil)
-        print "Normalizando a iris"
+        print("Normalizando a iris")
         image_normalized = normalize_iris(image, pupil, radius_iris)
         casia_lamp.iris.append(image_normalized)
         #binariza a imagem com Haar Wavelet
-        print "Realizando Haar Wavelet"
+        print("Realizando Haar Wavelet")
         coefficients = pywt.wavedec2(image_normalized, 'haar', level=4)
         cA = coefficients[0] #Approximation
         (cH, cV, cD) = coefficients[1] #horizontal detail, vertical detail and diagonal detail
         image_binar = np.zeros((cA.shape[0], cA.shape[1]), dtype='uint8')
-        for i in xrange(cA.shape[0]):
+        for i in range(cA.shape[0]):
             for j in xrange(cA.shape[1]):
                 if ((cH[i,j]>=0) and (cV[i,j]>=0) and (cD[i,j]>=0)):
                     image_binar[i,j] = 1
@@ -242,13 +211,13 @@ for image in casia_lamp.images:
 if (len(casia_lamp.images)%2 != 0): #se não for número par de imagens
     np.delete(casia_lamp.images, len(casia_lamp.images)-1, 0)
 
-print "Hamming"
+print("Hamming")
 #percorrer como uma matriz de iris codes triangular (para n repetir as distancias)
 distance = []
 true_or_false = []
-for i in xrange(0, len(casia_lamp.codes)): #3954 imagens e códigos
+for i in range(0, len(casia_lamp.codes)): #3954 imagens e códigos
     code_query = casia_lamp.codes[i]
-    for j in xrange(i+1, len(casia_lamp.codes)):
+    for j in range(i+1, len(casia_lamp.codes)):
         code_database = casia_lamp.codes[j]
         distance.append(hamming_distance(code_query, code_database))
         true_or_false.append((casia_lamp.labels[i] == casia_lamp.labels[j]))
@@ -265,11 +234,11 @@ for aux in true_or_false:
 
 false_positives = []
 false_negatives = []
-print "Detectando falsos positivos e falsos negativos"
+print("Detectando falsos positivos e falsos negativos")
 for limit in limits:
     fp = 0
     fn = 0
-    for j in xrange(len(distance)):
+    for j in range(len(distance)):
         database = distance[j]
         if database <= limit and true_or_false[j] == False:
             fp += 1
@@ -281,7 +250,7 @@ for limit in limits:
     false_positives.append(fp)
     false_negatives.append(fn)
 
-print "Plotando gráficos FARxFRR"
+print("Plotando gráficos FARxFRR")
 false_positives = np.array(false_positives)
 false_negatives = np.array(false_negatives)
 index_EER = np.argmin(np.absolute(false_positives - false_negatives)) #indice para a diferença mínima entre falso positivos e falso negativos
@@ -321,7 +290,7 @@ for train_index, test_index in kfold.split(lbps):
         data_train.append(lbps[train])
         label_train.append(casia_lamp.labels[train])
 
-    print "Treinando SVM"
+    print("Treinando SVM")
     model = svm.SVC(kernel='linear', C = 1.0)
     data_train = np.reshape(data_train, (len(data_train), data_train[0].shape[0]*data_train[0].shape[1]))
     model.fit(data_train, label_train)
@@ -343,27 +312,27 @@ print ("Mean accuracy for CASIA Lamp: "+str(accuracy/10))
 ### CASIA INTERVAL ###
 path_interval = './CASIA-IrisV4-Interval'
 casia_interval = Dataset(path_interval)
-print "\n\nLendo dataset CASIA Interval"
-casia_interval.get_images_and_labels()
-print (str(len(casia_interval.images))+" imagens")
+print("\n\nLendo dataset CASIA Interval")
+casia_interval.load_images_and_labels()
+print(str(len(casia_interval.images))+" imagens")
 c = centerx = centery = radius_iris = radius_pupil = 0
 for image in casia_interval.images:
-    print "Pré-processando a imagem "+str(c+1)+" e detectando a pupila"
+    print("Pré-processando a imagem "+str(c+1)+" e detectando a pupila")
     pupil = preprocess_interval(image)
     if pupil is not None: #achou a pupila
-        print "Detectando a iris"
+        print("Detectando a iris")
         radius_iris = get_iris(image, pupil)
-        print "Normalizando a iris"
+        print("Normalizando a iris")
         image_normalized = normalize_iris(image, pupil, radius_iris)
         casia_interval.iris.append(image_normalized)
         #binariza a imagem com Haar Wavelet
-        print "Realizando Haar Wavelet"
+        print("Realizando Haar Wavelet")
         coefficients = pywt.wavedec2(image_normalized, 'haar', level=4)
         cA = coefficients[0] #Approximation
         (cH, cV, cD) = coefficients[1] #horizontal detail, vertical detail and diagonal detail
         image_binar = np.zeros((cA.shape[0], cA.shape[1]), dtype='uint8')
-        for i in xrange(cA.shape[0]):
-            for j in xrange(cA.shape[1]):
+        for i in range(cA.shape[0]):
+            for j in range(cA.shape[1]):
                 if ((cH[i,j]>=0) and (cV[i,j]>=0) and (cD[i,j]>=0)):
                     image_binar[i,j] = 1
                 else:
@@ -386,13 +355,13 @@ for image in casia_interval.images:
 if (len(casia_interval.images)%2 != 0): #se não for número par de imagens
     np.delete(casia_interval.images, len(casia_interval.images)-1, 0)
 
-print "Hamming"
+print("Hamming")
 #percorrer como uma matriz de iris codes triangular (para n repetir as distancias)
 distance = []
 true_or_false = []
-for i in xrange(0, len(casia_interval.codes)): #3954 imagens e códigos
+for i in range(0, len(casia_interval.codes)): #3954 imagens e códigos
     code_query = casia_interval.codes[i]
-    for j in xrange(i+1, len(casia_interval.codes)):
+    for j in range(i+1, len(casia_interval.codes)):
         code_database = casia_interval.codes[j]
         distance.append(hamming_distance(code_query, code_database))
         true_or_false.append((casia_interval.labels[i] == casia_interval.labels[j]))
@@ -409,11 +378,11 @@ for aux in true_or_false:
 
 false_positives = []
 false_negatives = []
-print "Detectando falsos positivos e falsos negativos"
+print("Detectando falsos positivos e falsos negativos")
 for limit in limits:
     fp = 0
     fn = 0
-    for j in xrange(len(distance)):
+    for j in range(len(distance)):
         database = distance[j]
         if database <= limit and true_or_false[j] == False:
             fp += 1
@@ -425,7 +394,7 @@ for limit in limits:
     false_positives.append(fp)
     false_negatives.append(fn)
 
-print "Plotando gráficos FARxFRR"
+print("Plotando gráficos FARxFRR")
 false_positives = np.array(false_positives)
 false_negatives = np.array(false_negatives)
 index_EER = np.argmin(np.absolute(false_positives - false_negatives)) #indice para a diferença mínima entre falso positivos e falso negativos
@@ -465,7 +434,7 @@ for train_index, test_index in kfold.split(lbps):
         data_train.append(lbps[train])
         label_train.append(casia_interval.labels[train])
 
-    print "Treinando SVM"
+    print("Treinando SVM")
     model = svm.SVC(kernel='linear', C = 1.0)
     data_train = np.reshape(data_train, (len(data_train), data_train[0].shape[0]*data_train[0].shape[1]))
     model.fit(data_train, label_train)
