@@ -1,10 +1,5 @@
 import numpy as np
-import cv2, os
-import numpy as np
-from PIL import Image
-import math
 import pywt
-import sys
 import progressbar
 from skimage import feature
 from sklearn import svm
@@ -53,14 +48,21 @@ def iris_detection(dataset):
     bar.finish()
 
 def iris_verification(dataset):
+    print("Verifying iris")
+    bar = progressbar.ProgressBar(maxval=len(dataset.codes) - 1)
+    bar.start()
+
     distance = []
     true_or_false = []
     for i in range(0, len(dataset.codes)):
+        bar.update(i)
         code_query = dataset.codes[i]
         for j in range(i+1, len(dataset.codes)):
             code_database = dataset.codes[j]
             distance.append(hamming_distance(code_query, code_database))
             true_or_false.append((dataset.labels[i] == dataset.labels[j]))
+
+    bar.finish()
 
     limits = np.sort(distance)
     limits = np.unique(limits)
@@ -74,7 +76,6 @@ def iris_verification(dataset):
 
     false_positives = []
     false_negatives = []
-    print("Detectando falsos positivos e falsos negativos")
     for limit in limits:
         fp = 0
         fn = 0
@@ -90,7 +91,6 @@ def iris_verification(dataset):
         false_positives.append(fp)
         false_negatives.append(fn)
 
-    print("Plotando gráficos FARxFRR")
     false_positives = np.array(false_positives)
     false_negatives = np.array(false_negatives)
 
@@ -104,6 +104,7 @@ def iris_verification(dataset):
     plt.plot(false_positives[index_EER], false_negatives[index_EER], 'o', color='green', label='EER')
     plt.legend()
     plt.savefig('DETcurve.png')
+    print("FARxFRR graph saved as DETcurve.png")
 
 def lbp(iris):
     lbps = []
@@ -112,12 +113,14 @@ def lbp(iris):
         if img.shape[0] > major:
             major = img.shape[0]
 
-    c = 0
-    for img in iris:
+    print("LBP extraction")
+    bar = progressbar.ProgressBar(maxval=len(iris) - 1)
+    bar.start()
+    for index, img in enumerate(iris):
         img = np.resize(img, (major,img.shape[1]))
-        print ("LBP da imagem "+str(c+1))
         lbps.append(feature.local_binary_pattern(img, img.shape[1], img.shape[0], method="uniform"))
-        c+=1
+        bar.update(index)
+    bar.finish()   
 
     return lbps
 
@@ -125,27 +128,33 @@ def iris_identification(dataset):
     lbps = lbp(dataset.iris)
     kfold = KFold(n_splits=10, shuffle=True)
     accuracy = 0
+
+    print("Calculating accuracy for Iris identification using SVM and KNN")
+    bar = progressbar.ProgressBar(maxval=10)
+    bar.start()
+    epoch = 0
     for train_index, test_index in kfold.split(lbps):
         data_train = []
-        data_test = []
         label_train = []
-        label_test = []
-        # print("TRAIN:", train_index, "TEST:", test_index)
-        #labels referenciada pelo indice da imagem
         for train in train_index:
             data_train.append(lbps[train])
-            label_train.append(casia_lamp.labels[train])
+            label_train.append(dataset.labels[train])
 
-        print("Treinando SVM")
         model = svm.SVC(kernel='linear', C = 1.0)
         data_train = np.reshape(data_train, (len(data_train), data_train[0].shape[0]*data_train[0].shape[1]))
         model.fit(data_train, label_train)
 
+        data_test = []
+        label_test = []
         for test in test_index:
             data_test.append(lbps[test])
-            label_test.append(casia_lamp.labels[test])
+            label_test.append(dataset.labels[test])
 
         data_test = np.reshape(data_test, (len(data_test), data_test[0].shape[0]*data_test[0].shape[1]))
         accuracy += model.score(data_test, label_test)
 
+        bar.update(epoch)
+        epoch += 1
+
+    bar.finish()
     print ("Mean accuracy: "+str(accuracy/10))
