@@ -1,9 +1,8 @@
 Relatório trabalho 2 Visão Computacional
 Aluna: Laura Silva Lopes, GRR20163048
 
-Os caminhos (linha 195 e linha 341) até os diretórios com as imagens estão como:
-path_lamp = './CASIA-Iris-Lamp-100'
-path_interval = './CASIA-IrisV4-Interval'
+path_lamp = 'data/CASIA-Iris-Lamp-100' [http://biometrics.idealtest.org/downloadDB.do?id=4&subset=2]
+path_interval = 'data/CASIA-IrisV4-Interval' [http://biometrics.idealtest.org/dbDetailForUser.do?id=4]
 
 Estão implementados e executando corretamente no código:
 - Leitura do banco de imagens
@@ -13,12 +12,6 @@ Estão implementados e executando corretamente no código:
 - FAR/FRR (DET curve) and EER usando Hamming distance 
 - Cálculo de acurácia usando SVM
 
-O formato da chamada das funções cv2.HoughCircles presentes nos métodos de pré-processamento depende da versão do python que está usando. No momento, o método utilizado no HoughCircles está descrito como: cv2.HOUGH_GRADIENT, mas pode não funcionar quando for executado em outro computador (do dinf, por exemplo). Nesse caso deve-se usar o método: cv2.cv.CV_HOUGH_GRADIENT.
-Para o dataset IrisV4-Interval, o que muda de todo o processo de identificação da iris é o pré-processamento, que deve ser chamada a função preprocess_interval.
-Os processos de obtenção da iris pré-processada e dos LBPs são bastante demorados, além do treino de SVM e o cálculo de acurácia.
+Acurácia média obtida, com 10 sets de imagens treino/teste diferentes, usando kfold, do CASIA Lamp: 0.6261136683288582
 
-Acurácia média obtida, com 10 sets de imagens treino/teste diferentes, usando kfold, do CASIA Lamp: 0.662895409794144
-
-Acurácia média obtida, com 10 sets de imagens treino/teste diferentes, usando kfold, do CASIA Interval: 0.2774412374697546
-
-
+Acurácia média obtida, com 10 sets de imagens treino/teste diferentes, usando kfold, do CASIA Interval: 0.19397435897435897
