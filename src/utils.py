@@ -5,7 +5,7 @@ from skimage import feature
 from sklearn import svm
 from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
-from dataset import Dataset, preprocess, get_iris_radius, normalize_iris
+from src.dataset import Dataset, preprocess, get_iris_radius, normalize_iris
 
 def hamming_distance(code_query, code_database):
     nm = code_query.shape[0] * code_query.shape[1]

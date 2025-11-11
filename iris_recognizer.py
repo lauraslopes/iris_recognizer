@@ -1,6 +1,6 @@
 import numpy as np
-from dataset import Dataset
-from utils import iris_detection, iris_verification, iris_identification
+from src.dataset import Dataset
+from src.utils import iris_detection, iris_verification, iris_identification
 
 def execute(path):
     dataset = Dataset(path)
